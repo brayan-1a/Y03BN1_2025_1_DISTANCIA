@@ -5,15 +5,21 @@ import datetime
 from supabase import create_client
 import json
 import secrets
+import toml
 
-#Configurar el cliente de Supabase
-secrets = toml.load('secrets.toml')
-SUPABASE_URL = secrets[SUPABASE_URL]
-SUPABASE_KEY = secrets[SUPABASE_KEY]
+# Configurar el cliente de Supabase
+try:
+    secrets = toml.load('secrets.toml')
+except FileNotFoundError:
+    st.error('Archivo de credenciales no encontrado')
+    st.stop()
+
+SUPABASE_URL = secrets['SUPABASE_URL']
+SUPABASE_KEY = secrets['SUPABASE_KEY']
 
 supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-#Cargar el archivo CSV de datos iniciales
+# Cargar el archivo CSV de datos iniciales
 @st.cache_data
 def cargar_datos():
     return pd.read_csv('mining_data.csv')
@@ -28,12 +34,12 @@ def insertar_resultado_prediccion(prediccion_exito):
 ######## INTERFAZ DE USUARIO CON STREAMLIT ########
 st.title("Modelo Predictivo para proceso minero")
 
-#Cargar datos y mostrarlos
+# Cargar datos y mostrarlos
 st.write("Datos iniciales para entrenamiento:")
 datos = cargar_datos()
 st.dataframe(datos)
 
-#Normalización de los datos
+# Normalización de los datos
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler()
 
@@ -46,9 +52,10 @@ datos.update(datos_normalizados)
 st.write("Datos normalizados")
 st.dataframe(datos)
 
-#dummy Predictor
+# Dummy Predictor
 st.subheader("Predicción del proceso")
 if st.button("Predecir Éxito"):
-    exito_predicho = True if datos ['calidad_mineral'].mean() > 7 else False
+    exito_predicho = True if datos['calidad_mineral'].mean() > 7 else False
     insertar_resultado_prediccion(exito_predicho)
     st.write(f"Resultado de predicción: {'Exitoso' if exito_predicho else 'No Exitoso'}")
+
