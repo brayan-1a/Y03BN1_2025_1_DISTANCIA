@@ -28,7 +28,7 @@ def insertar_resultado_prediccion(prediccion_exito):
         "fecha": datetime.datetime.now().isoformat(),  # Convertir datetime a una cadena en formato ISO
         "exito_predicho": prediccion_exito
     }
-    supabase_client.table("resultados_prediccion").insert(data).execute()
+    supabase_client.table("resultados_prediccion2").insert(data).execute()
 
 # Definir la interfaz de usuario con Streamlit
 st.title("Modelo Predictivo para Ventas de Productos Electrónicos")

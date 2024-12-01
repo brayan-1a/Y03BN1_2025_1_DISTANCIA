@@ -27,5 +27,5 @@ def obtener_datos_ventas():
 
 # Función para insertar los resultados de las predicciones de ventas
 def insertar_resultado_prediccion(datos):
-    response = supabase_client.table("resultados_prediccion").insert(datos).execute()
+    response = supabase_client.table("resultados_prediccion2").insert(datos).execute()
     return response
