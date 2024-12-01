@@ -4,3 +4,4 @@ supabase
 scikit-learn
 joblib
 pytoml
+matplotlib
