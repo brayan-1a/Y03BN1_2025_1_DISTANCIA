@@ -25,11 +25,17 @@ def cargar_datos():
 
 # Función para insertar el resultado de la predicción en la base de datos
 def insertar_resultado_prediccion(prediccion_exito):
+    # Convertir el valor booleano a una cadena ('True' o 'False')
+    prediccion_exito_str = 'True' if prediccion_exito else 'False'
+    
     data = {
         "fecha": datetime.datetime.now().isoformat(),  # Convertir datetime a una cadena en formato ISO
-        "exito_predicho": prediccion_exito  # Guardar el valor booleano
+        "exito_predicho": prediccion_exito_str  # Guardar el valor como cadena ('True' o 'False')
     }
+    
+    # Insertar los datos en Supabase
     supabase_client.table("resultados_prediccion2").insert(data).execute()
+
 
 # Definir la interfaz de usuario con Streamlit
 st.title("Modelo Predictivo para Ventas de Productos Electrónicos")
