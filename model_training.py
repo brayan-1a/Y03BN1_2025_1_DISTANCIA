@@ -50,10 +50,5 @@ def entrenar_modelo():
     print(f"R2 Score: {r2}")
 
     # Guardar el modelo y el scaler entrenados
-    joblib.dump(modelo, 'modelo_arbol_decision_regresion.pkl')
-    joblib.dump(scaler, 'scaler.pkl')
-
-# Función para cargar el modelo entrenado
-def cargar_modelo():
-    # Cargar el modelo previamente guardado
-    return joblib.load('modelo_arbol_decision_regresion.pkl')
+    joblib.dump(modelo, 'modelo_arbol_decision_regresion.pkl')  # Guardar el modelo
+    joblib.dump(scaler, 'scaler.pkl')  # Guardar el scaler
