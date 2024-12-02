@@ -45,3 +45,4 @@ def entrenar_modelo():
 def cargar_modelo():
     return joblib.load('modelo_arbol_decision_regresion.pkl')
 
+
