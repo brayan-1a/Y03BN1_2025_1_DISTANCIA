@@ -78,10 +78,14 @@ if st.button("Predecir Ventas"):
     })
     
     prediccion = modelo.predict(datos_nuevos)
-    st.write(f"Predicción de ventas: {prediccion[0]:.2f} unidades")
     
-    # Convertir la predicción a un valor booleano (ejemplo con umbral de 0.5)
-    prediccion_exito = prediccion[0] > 0.5  # Si la predicción es mayor a 0.5, consideramos que es exitosa
+    # Asegurar que la predicción no sea negativa (si lo es, ponerla a 0 o un valor pequeño)
+    prediccion_ajustada = max(prediccion[0], 0.01)  # Usamos 0.01 para evitar valores negativos
+    
+    st.write(f"Predicción de ventas: {prediccion_ajustada:.2f} unidades")
+    
+    # Convertir la predicción ajustada a un valor booleano (ejemplo con umbral de 0.5)
+    prediccion_exito = prediccion_ajustada > 0.5  # Si la predicción es mayor a 0.5, consideramos que es exitosa
     
     # Insertar el resultado de la predicción en la base de datos de Supabase
     insertar_resultado_prediccion(prediccion_exito)
