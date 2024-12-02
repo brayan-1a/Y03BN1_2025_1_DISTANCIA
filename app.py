@@ -23,10 +23,11 @@ supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 def cargar_datos():
     return pd.read_csv('datatrend_sales.csv')
 
+# Función para insertar el resultado de la predicción en la base de datos
 def insertar_resultado_prediccion(prediccion_exito):
     data = {
         "fecha": datetime.datetime.now().isoformat(),  # Convertir datetime a una cadena en formato ISO
-        "exito_predicho": prediccion_exito
+        "exito_predicho": prediccion_exito  # Guardar el valor booleano
     }
     supabase_client.table("resultados_prediccion2").insert(data).execute()
 
@@ -73,6 +74,8 @@ if st.button("Predecir Ventas"):
     prediccion = modelo.predict(datos_nuevos)
     st.write(f"Predicción de ventas: {prediccion[0]:.2f} unidades")
     
+    # Convertir la predicción a un valor booleano (ejemplo con umbral de 0.5)
+    prediccion_exito = prediccion[0] > 0.5  # Si la predicción es mayor a 0.5, consideramos que es exitosa
+    
     # Insertar el resultado de la predicción en la base de datos de Supabase
-    insertar_resultado_prediccion(prediccion[0])
-
+    insertar_resultado_prediccion(prediccion_exito)
