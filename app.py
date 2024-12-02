@@ -85,7 +85,7 @@ if st.button("Predecir Ventas"):
     st.write(f"Predicción de ventas: {prediccion_ajustada:.2f} unidades")
     
     # Convertir la predicción ajustada a un valor booleano (ejemplo con umbral de 0.5)
-    prediccion_exito = prediccion_ajustada > 0.5  # Si la predicción es mayor a 0.5, consideramos que es exitosa
+    prediccion_exito = prediccion_ajustada > 0.01  # Si la predicción es mayor a 0.5, consideramos que es exitosa
     
     # Insertar el resultado de la predicción en la base de datos de Supabase
     insertar_resultado_prediccion(prediccion_exito)
