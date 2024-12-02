@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import joblib
+from sklearn.preprocessing import MinMaxScaler
 
 # Función para cargar los datos
 def cargar_datos():
@@ -29,12 +30,17 @@ def entrenar_modelo():
     # Dividir los datos en conjuntos de entrenamiento y prueba
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+    # Normalizar los datos
+    scaler = MinMaxScaler()
+    X_train_normalizado = scaler.fit_transform(X_train)
+    X_test_normalizado = scaler.transform(X_test)
+
     # Entrenar el modelo de regresión (Árbol de Decisión)
-    modelo = DecisionTreeRegressor(random_state=42)
-    modelo.fit(X_train, y_train)
+    modelo = DecisionTreeRegressor(random_state=42, max_depth=5, min_samples_split=10, min_samples_leaf=4)
+    modelo.fit(X_train_normalizado, y_train)
 
     # Evaluar el modelo
-    predicciones = modelo.predict(X_test)
+    predicciones = modelo.predict(X_test_normalizado)
     mae = mean_absolute_error(y_test, predicciones)
     rmse = mean_squared_error(y_test, predicciones, squared=False)
     r2 = r2_score(y_test, predicciones)
@@ -43,15 +49,11 @@ def entrenar_modelo():
     print(f"Raíz del error cuadrático medio (RMSE): {rmse}")
     print(f"R2 Score: {r2}")
 
-    # Guardar el modelo entrenado
+    # Guardar el modelo y el scaler entrenados
     joblib.dump(modelo, 'modelo_arbol_decision_regresion.pkl')
+    joblib.dump(scaler, 'scaler.pkl')
 
 # Función para cargar el modelo entrenado
 def cargar_modelo():
     # Cargar el modelo previamente guardado
     return joblib.load('modelo_arbol_decision_regresion.pkl')
-
-# Función para guardar el modelo entrenado
-def guardar_modelo(modelo):
-    # Guardar el modelo en un archivo .pkl
-    joblib.dump(modelo, 'modelo_arbol_decision_regresion.pkl')

@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
-from model_training import entrenar_modelo, preprocesar_datos, guardar_modelo, cargar_modelo
+from model_training import entrenar_modelo, preprocesar_datos, cargar_modelo
 import datetime
 from supabase import create_client
 import toml
 import os
+import joblib
 
 # Configurar el cliente de Supabase
 try:
@@ -36,7 +37,6 @@ def insertar_resultado_prediccion(prediccion_exito):
     # Insertar los datos en Supabase
     supabase_client.table("resultados_prediccion2").insert(data).execute()
 
-
 # Definir la interfaz de usuario con Streamlit
 st.title("Modelo Predictivo para Ventas de Productos Electrónicos")
 
@@ -47,10 +47,10 @@ st.dataframe(datos)
 
 # Preprocesamiento de los datos
 from sklearn.preprocessing import MinMaxScaler
-scaler = MinMaxScaler()
+scaler = joblib.load('scaler.pkl')  # Cargar el scaler previamente guardado
 
 columnas_numericas = ['advertising', 'discount', 'season']
-datos_normalizados = pd.DataFrame(scaler.fit_transform(datos[columnas_numericas]), columns=columnas_numericas)
+datos_normalizados = pd.DataFrame(scaler.transform(datos[columnas_numericas]), columns=columnas_numericas)
 
 datos.update(datos_normalizados)
 
@@ -77,15 +77,19 @@ if st.button("Predecir Ventas"):
         'season': [2]  # Ejemplo de temporada
     })
     
-    prediccion = modelo.predict(datos_nuevos)
+    # Normalizar los datos de entrada
+    datos_nuevos_normalizados = scaler.transform(datos_nuevos)
     
-    # Asegurar que la predicción no sea negativa (si lo es, ponerla a 0 o un valor pequeño)
+    # Realizar la predicción
+    prediccion = modelo.predict(datos_nuevos_normalizados)
+    
+    # Asegurar que la predicción no sea negativa
     prediccion_ajustada = max(prediccion[0], 0.01)  # Usamos 0.01 para evitar valores negativos
     
     st.write(f"Predicción de ventas: {prediccion_ajustada:.2f} unidades")
     
     # Convertir la predicción ajustada a un valor booleano (ejemplo con umbral de 0.5)
-    prediccion_exito = prediccion_ajustada > 0.01  # Si la predicción es mayor a 0.5, consideramos que es exitosa
+    prediccion_exito = prediccion_ajustada > 0.01  # Si la predicción es mayor a 0.01, consideramos que es exitosa
     
     # Insertar el resultado de la predicción en la base de datos de Supabase
     insertar_resultado_prediccion(prediccion_exito)
