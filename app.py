@@ -1,36 +1,35 @@
 import streamlit as st
-from supabase import create_client, Client
-import os
-from dotenv import load_dotenv
+from config import get_supabase_client
+from preprocess import load_data, clean_data, normalize_data
+from model_train import train_model
+import joblib
 
-# Cargar las variables de entorno desde el archivo .env
-load_dotenv()
+# Conexión con Supabase
+supabase = get_supabase_client()
 
-# Configuración de Supabase
-url = os.getenv("SUPABASE_URL")
-key = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
+# Título
+st.title("Predicción de Ventas con Streamlit y Supabase")
 
-# Función para cargar los datos desde Supabase
-def cargar_datos_desde_supabase():
-    # Realizar la consulta a la base de datos
-    response = supabase.table("datatrend_sales").select("*").execute()
+# Cargar y mostrar datos
+table_name = "datatrend_sales"
+df = load_data(supabase, table_name)
+st.write("Datos Crudos:", df)
 
-    # Verificar si hubo un error en la respuesta
-    if response.get("error"):
-        st.error(f"Error al cargar los datos desde Supabase: {response['error']['message']}")
-        return None
-    else:
-        # Devolver los datos si no hubo error
-        return response.get("data")
+# Preprocesamiento
+df_clean = clean_data(df)
+df_norm = normalize_data(df_clean, ["Publicidad", "Descuentos"])
+st.write("Datos Limpios y Normalizados:", df_norm)
 
-# Llamada a la función para obtener los datos
-datos = cargar_datos_desde_supabase()
+# Entrenamiento del modelo
+if st.button("Entrenar Modelo"):
+    metrics = train_model(df_norm, target_col="Ventas", feature_cols=["Publicidad", "Descuentos"])
+    st.write("Métricas del Modelo:", metrics)
 
-# Si los datos fueron cargados correctamente, mostrarlos en la interfaz de Streamlit
-if datos:
-    st.write("Datos cargados desde Supabase:")
-    st.write(datos)
-else:
-    st.write("No se pudieron cargar los datos.")
+# Cargar modelo entrenado
+try:
+    model = joblib.load("model.pkl")
+    st.success("Modelo cargado exitosamente")
+except FileNotFoundError:
+    st.error("No se ha entrenado un modelo aún.")
+
 
