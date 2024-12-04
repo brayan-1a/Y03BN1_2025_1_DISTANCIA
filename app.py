@@ -2,7 +2,6 @@ import streamlit as st
 from config import get_supabase_client
 from preprocess import load_data, clean_data, normalize_data
 from model_train import train_model
-import joblib
 
 # Conexión con Supabase
 supabase = get_supabase_client()
@@ -10,20 +9,25 @@ supabase = get_supabase_client()
 # Título
 st.title("Predicción de Ventas con Streamlit y Supabase")
 
-# Cargar y mostrar datos
+# Cargar datos desde Supabase
 table_name = "datatrend_sales"
 df = load_data(supabase, table_name)
 st.write("Datos Crudos:", df)
 
-# Preprocesamiento
-df_clean = clean_data(df)
-df_norm = normalize_data(df_clean, ["Publicidad", "Descuentos"])
-st.write("Datos Limpios y Normalizados:", df_norm)
+# Verificar y procesar datos
+required_columns = ["advertising", "discount", "sales"]
+if all(col in df.columns for col in required_columns):
+    df_clean = clean_data(df)
+    df_norm = normalize_data(df_clean, ["advertising", "discount"])
+    st.write("Datos Limpios y Normalizados:", df_norm)
+else:
+    st.error(f"Faltan columnas requeridas: {required_columns}")
 
 # Entrenamiento del modelo
 if st.button("Entrenar Modelo"):
-    metrics = train_model(df_norm, target_col="Ventas", feature_cols=["Publicidad", "Descuentos"])
+    metrics = train_model(df_norm, target_col="sales", feature_cols=["advertising", "discount"])
     st.write("Métricas del Modelo:", metrics)
+
 
 # Cargar modelo entrenado
 try:
