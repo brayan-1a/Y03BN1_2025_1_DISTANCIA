@@ -1,7 +1,7 @@
 import streamlit as st
 from config import get_supabase_client
 from preprocess import load_data, clean_data, normalize_data
-from model_train import train_model
+from model_train import train_model, optimize_model, train_model_decision_tree
 import joblib
 import os
 
@@ -31,11 +31,21 @@ if st.button("Entrenar Modelo"):
     metrics = train_model(df_norm, target_col="sales", feature_cols=["advertising", "discount"])
     st.write("Métricas del Modelo:", metrics)
 
+    # Realizar validación cruzada
+    mean_cv_score, std_cv_score = optimize_model(df_norm, target_col="sales", feature_cols=["advertising", "discount"])
+    st.write(f"Validación Cruzada - Media del MSE: {mean_cv_score}")
+    st.write(f"Validación Cruzada - Desviación estándar del MSE: {std_cv_score}")
+
     # Confirmar si el modelo fue guardado
     if os.path.exists("model.pkl"):
         st.success("Modelo guardado exitosamente.")
     else:
         st.error("No se pudo guardar el modelo. Verifica permisos o rutas.")
+
+# Entrenamiento del Árbol de Decisión (opcional)
+if st.button("Entrenar Árbol de Decisión"):
+    metrics_tree = train_model_decision_tree(df_norm, target_col="sales", feature_cols=["advertising", "discount"])
+    st.write("Métricas del Árbol de Decisión:", metrics_tree)
 
 # Cargar modelo entrenado
 st.write("Cargando modelo entrenado...")
@@ -48,6 +58,7 @@ if os.path.exists(model_path):
         st.error(f"Error al cargar el modelo: {e}")
 else:
     st.error("El modelo no existe. Por favor, entrena el modelo primero.")
+
 
 
 
