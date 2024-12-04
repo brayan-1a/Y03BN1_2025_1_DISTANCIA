@@ -47,6 +47,11 @@ if st.button("Entrenar Árbol de Decisión"):
     metrics_tree = train_model_decision_tree(df_norm, target_col="sales", feature_cols=["advertising", "discount"])
     st.write("Métricas del Árbol de Decisión:", metrics_tree)
 
+    # Realizar validación cruzada para el Árbol de Decisión
+    mean_cv_score_tree, std_cv_score_tree = optimize_model(df_norm, target_col="sales", feature_cols=["advertising", "discount"])
+    st.write(f"Validación Cruzada del Árbol de Decisión - Media del MSE: {mean_cv_score_tree}")
+    st.write(f"Validación Cruzada del Árbol de Decisión - Desviación estándar del MSE: {std_cv_score_tree}")
+
 # Cargar modelo entrenado
 st.write("Cargando modelo entrenado...")
 model_path = "model.pkl"  # Ruta relativa del modelo

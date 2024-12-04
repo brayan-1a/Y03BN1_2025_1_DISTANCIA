@@ -42,9 +42,9 @@ def optimize_model(df, target_col, feature_cols):
     X = df[feature_cols]
     y = df[target_col]
     
-    model = LinearRegression()
-    
-    # Realizamos la validación cruzada con 5 particiones (puedes ajustar el número de particiones)
+    model = DecisionTreeRegressor(random_state=42, max_depth=5)  # Usamos el modelo de árbol de decisión con límite en la profundidad
+
+    # Realizamos la validación cruzada con 5 particiones
     cv_scores = cross_val_score(model, X, y, cv=5, scoring='neg_mean_squared_error')
     
     # Convertimos los valores negativos de MSE a positivos
@@ -59,7 +59,7 @@ def train_model_decision_tree(df, target_col, feature_cols):
     X = df[feature_cols]
     y = df[target_col]
     
-    # Entrenamiento de Árbol de Decisión
+    # Entrenamiento de Árbol de Decisión con límite en la profundidad
     model_tree = DecisionTreeRegressor(random_state=42, max_depth=5)
     model_tree.fit(X, y)
 
