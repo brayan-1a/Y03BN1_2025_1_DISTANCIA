@@ -42,7 +42,7 @@ if st.button("Entrenar Modelo"):
     else:
         st.error("No se pudo guardar el modelo. Verifica permisos o rutas.")
 
-# Entrenamiento del Árbol de Decisión (opcional)
+# Entrenamiento del Árbol de Decisión 
 if st.button("Entrenar Árbol de Decisión"):
     metrics_tree = train_model_decision_tree(df_norm, target_col="sales", feature_cols=["advertising", "discount"])
     st.write("Métricas del Árbol de Decisión:", metrics_tree)
