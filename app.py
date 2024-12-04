@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
-from model_training import entrenar_modelo, preprocesar_datos, cargar_modelo
-import datetime
 from supabase import create_client
+import datetime
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.tree import DecisionTreeClassifier
+import joblib
 import toml
 import os
 
@@ -16,76 +18,65 @@ except FileNotFoundError:
 
 SUPABASE_URL = secrets['SUPABASE']['URL']
 SUPABASE_KEY = secrets['SUPABASE']['KEY']
+
 supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Cargar el archivo CSV de datos iniciales
-@st.cache_data
-def cargar_datos():
-    return pd.read_csv('datatrend_sales.csv')
+# Función para cargar los datos desde Supabase
+def cargar_datos_desde_supabase():
+    # Obtener los datos de la tabla 'datatrend_sales'
+    response = supabase_client.table("datatrend_sales").select("*").execute()
+    if response.error:
+        st.error(f"Error al cargar los datos desde Supabase: {response.error}")
+        return pd.DataFrame()  # Retorna un dataframe vacío en caso de error
+    return pd.DataFrame(response.data)
 
-# Función para insertar el resultado de la predicción en la base de datos
+# Función para insertar resultados de predicción
 def insertar_resultado_prediccion(prediccion_exito):
-    prediccion_exito_str = 'True' if prediccion_exito else 'False'
-    
     data = {
         "fecha": datetime.datetime.now().isoformat(),  # Convertir datetime a una cadena en formato ISO
-        "exito_predicho": prediccion_exito_str  # Guardar el valor como cadena ('True' o 'False')
+        "exito_predicho": prediccion_exito
     }
-    
-    # Insertar los datos en Supabase
-    supabase_client.table("resultados_prediccion2").insert(data).execute()
+    supabase_client.table("resultados_prediccion").insert(data).execute()
 
 # Definir la interfaz de usuario con Streamlit
-st.title("Modelo Predictivo para Ventas de Productos Electrónicos")
+st.title("Modelo Predictivo para Ventas - DataTrend")
 
-# Cargar datos y mostrarlos
-st.write("Datos de ventas:")
-datos = cargar_datos()
-st.dataframe(datos)
+# Cargar datos desde Supabase
+st.write("Datos de ventas cargados desde Supabase:")
+datos = cargar_datos_desde_supabase()
 
-# Preprocesamiento de los datos
-from sklearn.preprocessing import MinMaxScaler
-scaler = MinMaxScaler()
+if datos.empty:
+    st.error("No se pudieron cargar los datos.")
+else:
+    st.dataframe(datos)
 
-columnas_numericas = ['advertising', 'discount', 'season']
-datos_normalizados = pd.DataFrame(scaler.fit_transform(datos[columnas_numericas]), columns=columnas_numericas)
+    # Normalización de los datos (usar columnas relevantes)
+    columnas_numericas = ['advertising', 'discount']
+    scaler = MinMaxScaler()
+    datos_normalizados = pd.DataFrame(scaler.fit_transform(datos[columnas_numericas]), columns=columnas_numericas)
+    datos.update(datos_normalizados)
 
-datos.update(datos_normalizados)
+    st.write("Datos normalizados:")
+    st.dataframe(datos)
 
-st.write("Datos normalizados:")
-st.dataframe(datos)
+    # Entrenar y hacer predicciones
+    st.subheader("Predicción de ventas")
+    if st.button("Predecir Éxito"):
+        # Usamos un modelo de árbol de decisión (puedes usar el modelo entrenado si ya lo tienes)
+        try:
+            # Cargar el modelo entrenado
+            modelo = joblib.load('modelo_arbol_decision.pkl')
+            
+            # Usamos las columnas 'advertising' y 'discount' para predecir las ventas
+            X = datos[['advertising', 'discount']]
+            predicciones = modelo.predict(X)
 
-# Entrenamiento del modelo
-st.subheader("Entrenamiento del Modelo Predictivo")
+            # Hacer la predicción de éxito basado en las ventas
+            exito_predicho = (predicciones > 0).astype(int)  # Por ejemplo, si la predicción es positiva, consideramos éxito
 
-if st.button("Entrenar el Modelo"):
-    entrenar_modelo()
-    st.write("El modelo ha sido entrenado y guardado correctamente.")
+            # Insertar resultados de predicción en la base de datos
+            insertar_resultado_prediccion(exito_predicho)
 
-# Cargar el modelo y hacer predicciones
-st.subheader("Realizar Predicción de Ventas")
-
-if st.button("Predecir Ventas"):
-    modelo = cargar_modelo()
-    
-    # Seleccionar características de ejemplo para hacer la predicción
-    datos_nuevos = pd.DataFrame({
-        'advertising': [5000],  # Ejemplo de publicidad
-        'discount': [15],  # Ejemplo de descuento
-        'season': [2]  # Ejemplo de temporada
-    })
-    
-    prediccion = modelo.predict(datos_nuevos)
-    
-    # Forzar la predicción a que no sea negativa
-    prediccion_ajustada = max(prediccion[0], 0)  # Si la predicción es negativa, la ponemos en 0
-    
-    st.write(f"Predicción de ventas: {prediccion_ajustada:.2f} unidades")
-    
-    # Convertir la predicción ajustada a un valor booleano (ejemplo con umbral de 0.5)
-    prediccion_exito = prediccion_ajustada > 0.01  # Si la predicción es mayor a 0.01, consideramos que es exitosa
-    
-    # Insertar el resultado de la predicción en la base de datos de Supabase
-    insertar_resultado_prediccion(prediccion_exito)
-
-
+            st.write(f"Resultado de la predicción: {'Exitoso' if exito_predicho else 'No Exitoso'}")
+        except Exception as e:
+            st.error(f"Error al predecir: {str(e)}")
