@@ -2,6 +2,8 @@ import streamlit as st
 from config import get_supabase_client
 from preprocess import load_data, clean_data, normalize_data
 from model_train import train_model
+import joblib
+import os
 
 # Conexión con Supabase
 supabase = get_supabase_client()
@@ -25,15 +27,27 @@ else:
 
 # Entrenamiento del modelo
 if st.button("Entrenar Modelo"):
+    # Entrenar el modelo y mostrar métricas
     metrics = train_model(df_norm, target_col="sales", feature_cols=["advertising", "discount"])
     st.write("Métricas del Modelo:", metrics)
 
+    # Confirmar si el modelo fue guardado
+    if os.path.exists("model.pkl"):
+        st.success("Modelo guardado exitosamente.")
+    else:
+        st.error("No se pudo guardar el modelo. Verifica permisos o rutas.")
 
 # Cargar modelo entrenado
-try:
-    model = joblib.load("model.pkl")
-    st.success("Modelo cargado exitosamente")
-except FileNotFoundError:
-    st.error("No se ha entrenado un modelo aún.")
+st.write("Cargando modelo entrenado...")
+model_path = "model.pkl"  # Ruta relativa del modelo
+if os.path.exists(model_path):
+    try:
+        model = joblib.load(model_path)
+        st.success("Modelo cargado exitosamente.")
+    except Exception as e:
+        st.error(f"Error al cargar el modelo: {e}")
+else:
+    st.error("El modelo no existe. Por favor, entrena el modelo primero.")
+
 
 
