@@ -7,8 +7,12 @@ def load_data(supabase_client, table_name):
 
 def clean_data(df):
     """Realiza limpieza básica de los datos."""
-    # Ejemplo: Manejo de valores nulos
+    # Eliminar columnas sin nombre
+    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]  # Eliminar columnas que contienen 'Unnamed'
+
+    # Manejo de valores nulos (reemplazar con la media de cada columna)
     df.fillna(df.mean(), inplace=True)
+    
     return df
 
 def normalize_data(df, columns):
@@ -16,5 +20,6 @@ def normalize_data(df, columns):
     for col in columns:
         df[col] = (df[col] - df[col].mean()) / df[col].std()
     return df
+
 
 

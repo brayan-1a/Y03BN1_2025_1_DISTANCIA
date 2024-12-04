@@ -60,7 +60,7 @@ def train_model_decision_tree(df, target_col, feature_cols):
     y = df[target_col]
     
     # Entrenamiento de Árbol de Decisión
-    model_tree = DecisionTreeRegressor(random_state=42)
+    model_tree = DecisionTreeRegressor(random_state=42, max_depth=5)
     model_tree.fit(X, y)
 
     # Evaluar el modelo
